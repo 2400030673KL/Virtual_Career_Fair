@@ -6,11 +6,18 @@ import Navbar from "./components/navbar";
 import Home from "./components/Home";
 import SignUp from "./components/SignUp";
 import Login from "./components/login";
-import Dashboard from "./components/dashboard";
+import Dashboard from "./components/Dashboard";
 import Booths from "./components/booths";
 import Booth from "./components/booth";
 import CareerFairs from "./components/CareerFairs";
 import RecruiterDashboard from "./components/RecruiterDashboard";
+
+/* ===== ADMIN COMPONENTS ===== */
+import AdminLogin from "./components/adminlogin";
+import AdminDashboard from "./components/adminDashboard";
+import ManageFairs from "./components/managefairs";
+import ManageBooths from "./components/managebooths";
+import Registrations from "./components/registrations";
 
 export default function App() {
   return (
@@ -32,6 +39,13 @@ export default function App() {
 
           {/* ===== RECRUITER ROUTES ===== */}
           <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+
+          {/* ===== ADMIN ROUTES ===== */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/fairs" element={<ManageFairs />} />
+          <Route path="/admin/booths" element={<ManageBooths />} />
+          <Route path="/admin/registrations" element={<Registrations />} />
         </Routes>
       </div>
     </>

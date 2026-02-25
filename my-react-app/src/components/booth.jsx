@@ -1,5 +1,5 @@
-import Chat from "./chat";
-import ResumeUpload from "./resumeupload";
+import Chat from "./Chat";
+import ResumeUpload from "./ResumeUpload";
 
 export default function Booth() {
   return (

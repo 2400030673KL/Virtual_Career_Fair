@@ -25,3 +25,6 @@ npm-debug.log*
 
 # Local env
 *.local
+
+# Backend folder (separate repo)
+backend/

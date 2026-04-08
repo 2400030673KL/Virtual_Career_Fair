@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../lib/api";
 
@@ -10,6 +10,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.clearAuthSession();
+  }, []);
 
   const handleRoleSelect = (role) => {
     setUserType(role);
@@ -28,21 +32,24 @@ export default function Login() {
     setLoading(true);
 
     try {
+      api.clearAuthSession();
       const response = await api.post("/auth/login", {
         email,
         password,
         role: userType,
       });
 
-      localStorage.setItem("userType", userType);
-      localStorage.setItem("authUser", JSON.stringify(response.user));
+      api.persistAuthSession(response, userType);
 
       if (userType === "recruiter") {
         navigate("/recruiter/dashboard");
+      } else if (userType === "admin") {
+        navigate("/admin/dashboard");
       } else {
         navigate("/booths");
       }
     } catch (requestError) {
+      api.clearAuthSession();
       setError(requestError.message || "Unable to sign in");
     } finally {
       setLoading(false);

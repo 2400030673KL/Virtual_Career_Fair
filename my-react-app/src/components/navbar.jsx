@@ -1,10 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { api } from "../lib/api";
 
 export default function Navbar() {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [authUser, setAuthUser] = useState(api.getAuthUser());
+  const [authToken, setAuthToken] = useState(api.getAuthToken());
   const location = useLocation();
+
+  const role = authUser?.role || localStorage.getItem("userType");
+  const isAuthenticated = Boolean(authToken && authUser);
+
+  const dashboardRoute = role === "admin"
+    ? "/admin/dashboard"
+    : role === "recruiter"
+    ? "/recruiter/dashboard"
+    : "/dashboard";
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -20,6 +32,18 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const syncAuthState = () => {
+      setAuthUser(api.getAuthUser());
+      setAuthToken(api.getAuthToken());
+    };
+
+    window.addEventListener("storage", syncAuthState);
+    syncAuthState();
+
+    return () => window.removeEventListener("storage", syncAuthState);
+  }, [location.pathname]);
+
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
     if (!isDarkTheme) {
@@ -29,6 +53,12 @@ export default function Navbar() {
       document.body.classList.remove('dark-theme');
       localStorage.setItem('theme', 'light');
     }
+  };
+
+  const handleLogout = () => {
+    api.clearAuthSession();
+    setAuthUser(null);
+    setAuthToken(null);
   };
 
   const navLinks = [
@@ -80,13 +110,26 @@ export default function Navbar() {
               <span className="toggle-icon moon">🌙</span>
             </label>
           </div>
-          <Link to="/login" className="nav-login-btn">
-            Login
-          </Link>
-          <Link to="/signup" className="nav-signup-btn">
-            Sign Up
-            <span className="signup-arrow">→</span>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to={dashboardRoute} className="nav-login-btn">
+                Dashboard
+              </Link>
+              <button type="button" className="nav-signup-btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="nav-login-btn">
+                Login
+              </Link>
+              <Link to="/signup" className="nav-signup-btn">
+                Sign Up
+                <span className="signup-arrow">→</span>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

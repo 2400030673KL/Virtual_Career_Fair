@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
@@ -9,16 +9,21 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    api.clearAuthSession();
+  }, []);
+
   const handleSubmit = async () => {
     setError("");
     setLoading(true);
 
     try {
+      api.clearAuthSession();
       const response = await api.post("/auth/admin-login", { email, password });
-      localStorage.setItem("authUser", JSON.stringify(response.user));
-      localStorage.setItem("userType", "admin");
+      api.persistAuthSession(response, "admin");
       navigate("/admin/dashboard");
     } catch (requestError) {
+      api.clearAuthSession();
       setError(requestError.message || "Unable to sign in");
     } finally {
       setLoading(false);

@@ -17,6 +17,7 @@ export default function SignUp() {
     setLoading(true);
 
     try {
+      api.clearAuthSession();
       const response = await api.post("/auth/register", {
         name,
         email,
@@ -24,9 +25,7 @@ export default function SignUp() {
         role: userType,
       });
 
-      localStorage.setItem("userType", userType);
-      localStorage.setItem("userName", name);
-      localStorage.setItem("authUser", JSON.stringify(response.user));
+      api.persistAuthSession(response, userType);
 
       if (userType === "recruiter") {
         navigate("/recruiter/dashboard");
@@ -34,6 +33,7 @@ export default function SignUp() {
         navigate("/booths");
       }
     } catch (requestError) {
+      api.clearAuthSession();
       setError(requestError.message || "Unable to create account");
     } finally {
       setLoading(false);

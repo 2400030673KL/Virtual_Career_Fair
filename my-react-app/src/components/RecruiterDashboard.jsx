@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import ResumeDetail from "./ResumeDetail";
+import { api } from "../lib/api";
 
 // Seed some demo resumes so the dashboard isn't empty on first visit
 const DEMO_RESUMES = [
@@ -65,33 +66,30 @@ const DEMO_RESUMES = [
     },
 ];
 
-function initResumes() {
-    const stored = localStorage.getItem("submitted_resumes");
-    if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.length > 0) return parsed;
-    }
-    localStorage.setItem("submitted_resumes", JSON.stringify(DEMO_RESUMES));
-    return DEMO_RESUMES;
-}
-
 export default function RecruiterDashboard() {
-    const [resumes, setResumes] = useState([]);
+    const [resumes, setResumes] = useState(DEMO_RESUMES);
     const [selectedResume, setSelectedResume] = useState(null);
     const [filterStatus, setFilterStatus] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-        setResumes(initResumes());
+        api.get("/resumes")
+            .then(setResumes)
+            .catch(() => setResumes(DEMO_RESUMES));
     }, []);
 
-    const handleStatusUpdate = (id, newStatus) => {
-        const updated = resumes.map((r) =>
-            r.id === id ? { ...r, status: newStatus } : r
-        );
-        setResumes(updated);
-        localStorage.setItem("submitted_resumes", JSON.stringify(updated));
-        setSelectedResume((prev) => (prev ? { ...prev, status: newStatus } : null));
+    const handleStatusUpdate = async (id, newStatus) => {
+        try {
+            const updatedResume = await api.patch(`/resumes/${id}/status`, { status: newStatus });
+            setResumes((current) => current.map((resume) => (resume.id === id ? updatedResume : resume)));
+            setSelectedResume(updatedResume);
+        } catch {
+            const updated = resumes.map((r) =>
+                r.id === id ? { ...r, status: newStatus } : r
+            );
+            setResumes(updated);
+            setSelectedResume((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
     };
 
     const stats = {

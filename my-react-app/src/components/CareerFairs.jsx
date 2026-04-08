@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "../lib/api";
 
 const careerFairsData = [
   {
@@ -103,10 +104,17 @@ function formatDate(dateStr) {
 export default function CareerFairs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [careerFairs, setCareerFairs] = useState(careerFairsData);
 
-  const categories = ["All", ...new Set(careerFairsData.map((f) => f.category))];
+  useEffect(() => {
+    api.get("/fairs")
+      .then(setCareerFairs)
+      .catch(() => setCareerFairs(careerFairsData));
+  }, []);
 
-  const filteredFairs = careerFairsData.filter((fair) => {
+  const categories = ["All", ...new Set(careerFairs.map((f) => f.category))];
+
+  const filteredFairs = careerFairs.filter((fair) => {
     const matchesSearch =
       fair.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       fair.location.toLowerCase().includes(searchTerm.toLowerCase()) ||

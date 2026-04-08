@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { api } from "../lib/api";
 
-export default function ResumeUpload() {
+export default function ResumeUpload({ company = "Career Fair Booth" }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -9,6 +10,8 @@ export default function ResumeUpload() {
     fileName: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,31 +23,32 @@ export default function ResumeUpload() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    const newResume = {
-      id: "resume-" + Date.now(),
-      ...formData,
-      company: "Career Fair Booth",
-      date: new Date().toISOString().split("T")[0],
-      status: "pending",
-    };
+    try {
+      await api.post("/resumes", {
+        ...formData,
+        company,
+      });
 
-    const existing = JSON.parse(
-      localStorage.getItem("submitted_resumes") || "[]"
-    );
-    existing.push(newResume);
-    localStorage.setItem("submitted_resumes", JSON.stringify(existing));
-
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: "", email: "", position: "", summary: "", fileName: "" });
+      setSubmitted(true);
+      window.setTimeout(() => setSubmitted(false), 3000);
+      setFormData({ name: "", email: "", position: "", summary: "", fileName: "" });
+    } catch (requestError) {
+      setError(requestError.message || "Unable to submit resume");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="resume-upload-section">
       <h3 className="resume-upload-title">📄 Submit Your Resume</h3>
+      <p className="resume-upload-company">Applying to {company}</p>
+      {error && <div className="form-error">{error}</div>}
       {submitted && (
         <div className="resume-success-msg">
           ✅ Resume submitted successfully! Recruiters can now review it.
@@ -104,8 +108,8 @@ export default function ResumeUpload() {
             required
           />
         </div>
-        <button type="submit" className="ru-submit-btn">
-          Submit Resume
+        <button type="submit" className="ru-submit-btn" disabled={loading}>
+          {loading ? "Submitting..." : "Submit Resume"}
         </button>
       </form>
     </div>

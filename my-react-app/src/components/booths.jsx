@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "../lib/api";
 
 const companiesData = [
   {
@@ -121,10 +122,17 @@ function StarRating({ rating }) {
 export default function Booths() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("All");
+  const [companies, setCompanies] = useState(companiesData);
 
-  const industries = ["All", ...new Set(companiesData.map((c) => c.industry))];
+  useEffect(() => {
+    api.get("/booths")
+      .then(setCompanies)
+      .catch(() => setCompanies(companiesData));
+  }, []);
 
-  const filtered = companiesData.filter((c) => {
+  const industries = ["All", ...new Set(companies.map((c) => c.industry))];
+
+  const filtered = companies.filter((c) => {
     const matchSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,12 +154,12 @@ export default function Booths() {
         </div>
         <div className="booths-stats-row">
           <div className="booths-stat">
-            <span className="booths-stat-num">{companiesData.length}</span>
+            <span className="booths-stat-num">{companies.length}</span>
             <span className="booths-stat-label">Companies</span>
           </div>
           <div className="booths-stat">
             <span className="booths-stat-num">
-              {companiesData.reduce((sum, c) => sum + c.openRoles, 0)}
+              {companies.reduce((sum, c) => sum + c.openRoles, 0)}
             </span>
             <span className="booths-stat-label">Open Roles</span>
           </div>

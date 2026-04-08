@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { api } from "../lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1); // 1 = role selection, 2 = credentials
   const [userType, setUserType] = useState("");
-  const [isPasswordFocus, setIsPasswordFocus] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleRoleSelect = (role) => {
     setUserType(role);
@@ -15,16 +19,33 @@ export default function Login() {
   const handleBack = () => {
     setStep(1);
     setUserType("");
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem("userType", userType);
+    setError("");
+    setLoading(true);
 
-    if (userType === "recruiter") {
-      navigate("/recruiter/dashboard");
-    } else {
-      navigate("/booths");
+    try {
+      const response = await api.post("/auth/login", {
+        email,
+        password,
+        role: userType,
+      });
+
+      localStorage.setItem("userType", userType);
+      localStorage.setItem("authUser", JSON.stringify(response.user));
+
+      if (userType === "recruiter") {
+        navigate("/recruiter/dashboard");
+      } else {
+        navigate("/booths");
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Unable to sign in");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,12 +130,15 @@ export default function Login() {
               </p>
 
               <form onSubmit={handleSubmit} className="login-form">
+                {error && <div className="form-error">{error}</div>}
                 <div className="form-group">
                   <label className="form-label">Email</label>
                   <input
                     type="email"
                     placeholder="your.email@example.com"
                     className="form-input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -125,14 +149,16 @@ export default function Login() {
                     type="password"
                     placeholder="••••••••"
                     className="form-input"
-                    onFocus={() => setIsPasswordFocus(true)}
-                    onBlur={() => setIsPasswordFocus(false)}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
 
-                <button type="submit" className="login-button">
-                  {userType === "recruiter"
+                <button type="submit" className="login-button" disabled={loading}>
+                  {loading
+                    ? "Signing in..."
+                    : userType === "recruiter"
                     ? "Sign in as Recruiter"
                     : "Sign in as Student"}
                 </button>

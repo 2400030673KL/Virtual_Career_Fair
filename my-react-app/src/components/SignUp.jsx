@@ -1,22 +1,42 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { api } from "../lib/api";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const [userType, setUserType] = useState("student");
-  const [isPasswordFocus, setIsPasswordFocus] = useState(false);
-
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem("userType", userType);
-    localStorage.setItem("userName", name);
+    setError("");
+    setLoading(true);
 
-    if (userType === "recruiter") {
-      navigate("/recruiter/dashboard");
-    } else {
-      navigate("/booths");
+    try {
+      const response = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+        role: userType,
+      });
+
+      localStorage.setItem("userType", userType);
+      localStorage.setItem("userName", name);
+      localStorage.setItem("authUser", JSON.stringify(response.user));
+
+      if (userType === "recruiter") {
+        navigate("/recruiter/dashboard");
+      } else {
+        navigate("/booths");
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Unable to create account");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,6 +64,7 @@ export default function SignUp() {
           <p className="signup-subtitle">Join our virtual career fair platform</p>
 
           <form onSubmit={handleSubmit} className="signup-form">
+            {error && <div className="form-error">{error}</div>}
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <input
@@ -62,6 +83,8 @@ export default function SignUp() {
                 type="email"
                 placeholder="your.email@example.com"
                 className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -72,8 +95,8 @@ export default function SignUp() {
                 type="password"
                 placeholder="••••••••"
                 className="form-input"
-                onFocus={() => setIsPasswordFocus(true)}
-                onBlur={() => setIsPasswordFocus(false)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <p className="form-hint">Must be at least 6 characters</p>
@@ -113,8 +136,8 @@ export default function SignUp() {
               </div>
             </div>
 
-            <button type="submit" className="signup-button">
-              Sign Up
+            <button type="submit" className="signup-button" disabled={loading}>
+              {loading ? "Creating account..." : "Sign Up"}
             </button>
 
             <p className="signup-footer">
